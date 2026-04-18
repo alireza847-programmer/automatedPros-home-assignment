@@ -1,9 +1,11 @@
+import { StoryDto } from '@/hooks/queries/types/story';
+
 export enum Screens {
   home = 'home',
-  bookmarks = 'bookmarks',
+  storyDetails = 'storyDetails',
 }
 
 export type RootStackParamList = {
   [Screens.home]: undefined;
-  [Screens.bookmarks]: undefined;
+  [Screens.storyDetails]: { story: StoryDto };
 };

@@ -1,6 +1,8 @@
 import React, { FC, memo, useCallback, useMemo } from 'react';
-import { Pressable, StyleSheet, View, Linking } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppText } from '../appText';
 import AppImage from '../appImage';
 import { colors, radius, spacing } from '@/theme';
@@ -8,12 +10,16 @@ import { testIds } from '@/consts/testIds';
 import { StoryDto } from '@/hooks/queries/types/story';
 import { getRelativeTime } from '@/utils/time';
 import { getDomainFromUrl } from '@/utils/url';
+import { RootStackParamList, Screens } from '@/navigation/types';
 
 interface Props {
   item: StoryDto;
 }
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 const StoryItem: FC<Props> = ({ item }) => {
+  const navigation = useNavigation<NavigationProp>();
   const sourceDomain = useMemo(() => {
     return getDomainFromUrl(item.url);
   }, [item.url]);
@@ -30,10 +36,8 @@ const StoryItem: FC<Props> = ({ item }) => {
   }, [item.time]);
 
   const onItemPress = useCallback(() => {
-    if (item.url) {
-      Linking.openURL(item.url);
-    }
-  }, [item.url]);
+    navigation.navigate(Screens.storyDetails, { story: item });
+  }, [navigation, item]);
 
   return (
     <Pressable
