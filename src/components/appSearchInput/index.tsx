@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { TextInput, StyleSheet, View } from 'react-native';
 import { AppText } from '../appText';
 import { colors, radius, spacing } from '@/theme';
@@ -76,4 +76,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AppSearchInput;
+export default memo(AppSearchInput);

@@ -16,7 +16,6 @@ const OfflineBanner: FC<Props> = ({ isVisible }) => {
       setIsConnected(state.isConnected ?? true);
     });
 
-    // Initial check
     NetInfo.fetch().then(state => {
       setIsConnected(state.isConnected ?? true);
     });
