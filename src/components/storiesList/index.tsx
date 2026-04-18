@@ -22,7 +22,7 @@ interface Props {
   onRefresh?: () => void;
 }
 
-const ITEM_HEIGHT = 80;
+const ITEM_HEIGHT = 85;
 const ITEM_SPACING = spacing.md;
 const ROW_SIZE = ITEM_HEIGHT + ITEM_SPACING;
 
@@ -39,18 +39,9 @@ export const StoriesList: FC<Props> = ({
     state => state.setScrollPosition,
   );
 
-  useEffect(() => {
-    if (flatListRef.current && scrollPosition > 0) {
-      flatListRef.current.scrollToOffset({
-        offset: scrollPosition,
-        animated: false,
-      });
-    }
-  }, [scrollPosition]);
   useFocusEffect(
     useCallback(() => {
       if (flatListRef.current && scrollPosition > 0) {
-        // Small delay to ensure the list is ready
         const timeoutId = setTimeout(() => {
           flatListRef.current?.scrollToOffset({
             offset: scrollPosition,
@@ -123,12 +114,14 @@ export const StoriesList: FC<Props> = ({
 
   const refreshControl = useMemo(() => {
     if (onRefresh) {
-      <RefreshControl
-        refreshing={isRefetching}
-        onRefresh={onRefresh}
-        colors={[colors.accent]}
-        tintColor={colors.accent}
-      />;
+      return (
+        <RefreshControl
+          refreshing={isRefetching}
+          onRefresh={onRefresh}
+          colors={[colors.accent]}
+          tintColor={colors.accent}
+        />
+      );
     }
     return undefined;
   }, [isRefetching, onRefresh]);

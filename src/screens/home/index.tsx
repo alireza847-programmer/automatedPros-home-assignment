@@ -43,11 +43,8 @@ const HomeScreen = () => {
   };
 
   const handleSortChange = (newSort: SortOption) => {
-    const timeoutId = setTimeout(() => {
-      setSortBy(newSort);
-      setSearchText('');
-    }, 0);
-    return () => clearTimeout(timeoutId);
+    setSortBy(newSort);
+    setSearchText('');
   };
 
   const handleSearchChange = (text: string) => {

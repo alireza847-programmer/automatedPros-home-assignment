@@ -1,16 +1,16 @@
 import { StoriesList } from '@/components/storiesList';
-import { useTopStories } from '@/hooks/queries/useTopStories';
+import { QUERY_KEYS } from '@/hooks/queries/keys';
+import { StoryDto } from '@/hooks/queries/types/story';
 import useBookmarksStore from '@/store/bookmarksStore';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 const BookmarksScreen = () => {
-  const {
-    topStories,
-    isTopStoriesLoading,
-    isTopStoriesRefetching,
-    topStoriesError,
-  } = useTopStories();
+  const queryClient = useQueryClient();
+  const topStories: StoryDto[] | undefined = queryClient.getQueryData([
+    QUERY_KEYS.topStories,
+  ]);
   const bookmarkedStories = useBookmarksStore(
     state => state.bookmarkedStoryIds,
   );
@@ -22,12 +22,7 @@ const BookmarksScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StoriesList
-        items={bookmarkedTopStories}
-        isLoading={isTopStoriesLoading}
-        isRefetching={isTopStoriesRefetching}
-        error={topStoriesError}
-      />
+      <StoriesList items={bookmarkedTopStories} />
     </View>
   );
 };

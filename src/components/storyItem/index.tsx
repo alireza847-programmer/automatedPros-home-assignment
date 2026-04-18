@@ -22,13 +22,7 @@ interface Props {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const RightDeleteAction: FC<{ id: number }> = ({ id }) => {
-  const toggleBookmark = useBookmarksStore(state => state.toggleBookmark);
-
-  const onDelete = useCallback(() => {
-    toggleBookmark(id);
-  }, [toggleBookmark, id]);
-
+const RightDeleteAction: FC<{ onDelete: () => void }> = ({ onDelete }) => {
   return (
     <View style={[styles.deleteContainer]}>
       <Pressable onPress={onDelete} style={styles.deleteButton}>
@@ -44,6 +38,7 @@ const StoryItem: FC<Props> = ({ item }) => {
   const isStoryBookmarked = useBookmarksStore(state =>
     state.isStoryBookmarked(item.id),
   );
+  const toggleBookmark = useBookmarksStore(state => state.toggleBookmark);
 
   const sourceDomain = useMemo(() => getDomainFromUrl(item.url), [item.url]);
 
@@ -62,8 +57,8 @@ const StoryItem: FC<Props> = ({ item }) => {
   }, [navigation, item]);
 
   const renderRightActions = useCallback(
-    () => <RightDeleteAction id={item.id} />,
-    [item.id],
+    () => <RightDeleteAction onDelete={() => toggleBookmark(item.id)} />,
+    [item.id, toggleBookmark],
   );
 
   return (
@@ -90,7 +85,9 @@ const StoryItem: FC<Props> = ({ item }) => {
           />
         )}
         <View style={styles.content}>
-          <AppText style={styles.title}>{item.title}</AppText>
+          <AppText style={styles.title} numberOfLines={2}>
+            {item.title}
+          </AppText>
 
           <View style={styles.metadata}>
             {sourceDomain && (
@@ -112,12 +109,12 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xs,
   },
   container: {
-    minHeight: 80,
+    height: 85,
     padding: spacing.md,
     backgroundColor: colors.card,
     borderRadius: radius.md,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   favicon: {
     width: 32,

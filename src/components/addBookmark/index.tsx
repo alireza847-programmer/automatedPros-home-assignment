@@ -46,30 +46,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    lineHeight: 32,
-  },
-  metadata: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
+
   metaLabel: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.textPrimary,
     marginRight: spacing.sm,
     minWidth: 60,
-  },
-  metaValue: {
-    fontSize: 16,
-    color: colors.textSecondary,
   },
   url: {
     fontSize: 16,

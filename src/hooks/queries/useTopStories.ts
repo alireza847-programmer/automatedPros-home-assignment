@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 
 export const useTopStories = (sortBy: SortOption = 'score') => {
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: [QUERY_KEYS.topStories],
+    queryKey: [QUERY_KEYS.topStories, sortBy],
     queryFn,
     staleTime: 0,
   });
