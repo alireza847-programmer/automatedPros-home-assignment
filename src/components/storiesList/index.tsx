@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -6,11 +6,13 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import AssetItem from '../storyItem';
 import { spacing, colors } from '@/theme';
 import { AppText } from '../appText';
 import { testIds } from '@/consts/testIds';
 import { StoryDto } from '@/hooks/queries/types/story';
+import useScrollPositionStore from '@/store/scrollPositionStore';
 
 interface Props {
   items: StoryDto[];
@@ -31,6 +33,42 @@ export const StoriesList: FC<Props> = ({
   error,
   onRefresh,
 }) => {
+  const flatListRef = useRef<FlatList>(null);
+  const scrollPosition = useScrollPositionStore(state => state.scrollPosition);
+  const setScrollPosition = useScrollPositionStore(
+    state => state.setScrollPosition,
+  );
+
+  useEffect(() => {
+    if (flatListRef.current && scrollPosition > 0) {
+      flatListRef.current.scrollToOffset({
+        offset: scrollPosition,
+        animated: false,
+      });
+    }
+  }, [scrollPosition]);
+  useFocusEffect(
+    useCallback(() => {
+      if (flatListRef.current && scrollPosition > 0) {
+        // Small delay to ensure the list is ready
+        const timeoutId = setTimeout(() => {
+          flatListRef.current?.scrollToOffset({
+            offset: scrollPosition,
+            animated: false,
+          });
+        }, 100);
+        return () => clearTimeout(timeoutId);
+      }
+    }, [scrollPosition]),
+  );
+  const handleScroll = useCallback(
+    (event: any) => {
+      const offsetY = event.nativeEvent.contentOffset.y;
+      setScrollPosition(offsetY);
+    },
+    [setScrollPosition],
+  );
+
   const keyExtractor = useCallback((item: StoryDto) => item.id?.toString(), []);
 
   const renderItem = useCallback(({ item }: { item: StoryDto }) => {
@@ -97,6 +135,7 @@ export const StoriesList: FC<Props> = ({
 
   return (
     <FlatList
+      ref={flatListRef}
       data={items}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
@@ -110,6 +149,8 @@ export const StoriesList: FC<Props> = ({
       ListEmptyComponent={listEmptyComponent}
       ItemSeparatorComponent={itemSeparator}
       refreshControl={refreshControl}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
     />
   );
 };
