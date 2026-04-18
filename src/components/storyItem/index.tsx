@@ -9,7 +9,6 @@ import Swipeable, {
 import { AppText } from '../appText';
 import AppImage from '../appImage';
 import { colors, radius, spacing } from '@/theme';
-import { testIds } from '@/consts/testIds';
 import { StoryDto } from '@/hooks/queries/types/story';
 import { getRelativeTime } from '@/utils/time';
 import { getDomainFromUrl } from '@/utils/url';
@@ -71,11 +70,7 @@ const StoryItem: FC<Props> = ({ item }) => {
       containerStyle={styles.swipeableContainer}
       enabled={isStoryBookmarked}
     >
-      <Pressable
-        onPress={onItemPress}
-        testID={testIds.list.item(item.id)}
-        style={styles.container}
-      >
+      <Pressable onPress={onItemPress} style={styles.container}>
         {faviconUrl && (
           <AppImage
             uri={faviconUrl}

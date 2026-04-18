@@ -78,7 +78,7 @@ export const StoriesList: FC<Props> = ({
   const listEmptyComponent = useCallback(() => {
     if (isLoading) {
       return (
-        <View style={styles.loadingContainer} testID={testIds.list.loading}>
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <AppText style={styles.loadingText}>Loading stories...</AppText>
         </View>
@@ -87,7 +87,7 @@ export const StoriesList: FC<Props> = ({
 
     if (error) {
       return (
-        <View style={styles.errorContainer} testID={testIds.list.errorState}>
+        <View style={styles.errorContainer}>
           <AppText style={styles.errorTitle}>
             Oops! Something went wrong
           </AppText>
@@ -99,7 +99,7 @@ export const StoriesList: FC<Props> = ({
     }
 
     return (
-      <View style={styles.emptyContainer} testID={testIds.list.emptyState}>
+      <View style={styles.emptyContainer}>
         <AppText style={styles.emptyTitle}>No stories found</AppText>
         <AppText style={styles.emptyMessage}>
           There are no stories available at the moment.

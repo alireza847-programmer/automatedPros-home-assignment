@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import { AppText } from '../appText';
 import { colors, radius, spacing } from '@/theme';
-import { testIds } from '@/consts/testIds';
 
 export type SelectItem<T extends string> = {
   name: string;
@@ -72,7 +71,6 @@ export function AppSelectBox<T extends string>({
                     ])}
                     key={item.value}
                     activeOpacity={0.8}
-                    testID={testIds.filterBox.filterValue(item.value)}
                   >
                     <AppText>{item.name}</AppText>
                   </TouchableOpacity>

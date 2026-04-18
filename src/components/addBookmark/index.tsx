@@ -4,6 +4,7 @@ import { AppText } from '@/components/appText';
 import { colors, spacing, radius } from '@/theme';
 import useBookmarksStore from '@/store/bookmarksStore';
 import { StoryDto } from '@/hooks/queries/types/story';
+import { testIds } from '@/consts/testIds';
 
 interface Props {
   story: StoryDto;
@@ -20,6 +21,7 @@ const AddBookmark: FC<Props> = ({ story }) => {
       <View style={styles.bookmarkRow}>
         <AppText style={styles.metaLabel}>Bookmark:</AppText>
         <Pressable
+          testID={testIds.bookmark.button(story.id)}
           onPress={() => toggleBookmark(story.id)}
           style={[
             styles.bookmarkButton,

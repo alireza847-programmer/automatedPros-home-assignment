@@ -2,7 +2,6 @@ import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { TextInput, StyleSheet, View } from 'react-native';
 import { AppText } from '../appText';
 import { colors, radius, spacing } from '@/theme';
-import { testIds } from '@/consts/testIds';
 
 interface Props {
   value: string;
@@ -45,7 +44,6 @@ const AppSearchInput: FC<Props> = ({
         onChangeText={handleTextChange}
         placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
-        testID={testIds.search.input}
         returnKeyType="search"
         autoCapitalize="none"
         autoCorrect={false}
