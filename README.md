@@ -110,51 +110,49 @@ FastImage provides HTTP cache-control headers, priority queueing, and significan
 
 ### Q1 — Bridge vs JSI & The New Architecture
 
-The legacy Bridge was an asynchronous, serialised JSON bus between the JavaScript thread and the native side. Every call — whether a touch event, a layout measurement, or a module method — was JSON-serialised, sent across the bridge, deserialised, executed natively, serialised again, and returned. Because this is asynchronous and batched, there is an inherent latency floor, and the JS thread and the native thread cannot share memory directly.
+In the old React Native architecture, JavaScript and native code communicate through something called the Bridge. It works, but it’s not very efficient because everything has to be serialized into JSON and sent asynchronously. That means if you’re passing a lot of data or doing frequent updates (like animations or real-time UI changes), it can become a bottleneck and cause dropped frames or delays.
 
-JSI (JavaScript Interface) replaces that bus with a C++ layer that the JS engine (Hermes) can call synchronously. JS holds a direct reference to a C++ host object — no serialisation, no batching, no thread-hop required for synchronous reads. This eliminates the bridge congestion that caused choppy animations when many events fired simultaneously.
+JSI changes this by removing the Bridge entirely and allowing JavaScript to talk to native code more directly. Instead of serializing everything, it can call native functions and even share memory in some cases. This makes a big difference in performance, especially for things that need to be fast and responsive.
 
-Fabric is the new renderer built on JSI. It moves layout calculation to C++ (Yoga), lets the UI thread read JS-computed values synchronously during the commit phase, and enables concurrent rendering. TurboModules replace the old NativeModules registry: modules are loaded lazily (on first access rather than at startup) and their type signatures are statically known, which removes the dynamic lookup overhead and speeds up cold start.
+On top of that, the new architecture introduces Fabric and TurboModules. Fabric improves how rendering works and makes it more aligned with modern React features like concurrent rendering. TurboModules make native modules more efficient by loading them only when they’re actually needed, instead of all at once at startup.
 
 ### Q2 — Diagnosing a Janky FlatList
 
-**Step 1 — Diagnose with tooling.** Open the Flipper Performance plugin or the React DevTools Profiler. Enable "Highlight renders" to see which components re-render on scroll. On Android, systrace or the GPU rendering bars in Developer Options reveal whether jank is UI-thread or JS-thread bound.
+The first thing I’d do is confirm where the bottleneck is instead of guessing. I’d turn on the React Native Performance Monitor and use the React DevTools Profiler (or Flipper) to see if the issue is coming from JS thread drops, excessive re-renders, or layout work on the native side. This helps me understand whether the problem is rendering, data handling, or something else like expensive calculations.
 
-**Step 2 — Check `keyExtractor` and `getItemLayout`.** Without `getItemLayout`, FlatList cannot pre-calculate item positions and must measure each item on mount, causing layout thrash. Without a stable `keyExtractor`, items are unmounted and remounted on data changes instead of being reused.
+Once I have that signal, I’d check if the list is re-rendering more than it should. A common issue is unstable references — for example, inline renderItem functions or missing memoization. I’d wrap list items with React.memo, use useCallback for renderItem, and make sure the keyExtractor is stable so React can properly reuse rows.
 
-**Step 3 — Reduce `renderItem` complexity.** Extract the item component, wrap it in `React.memo`, and memoize all callback props with `useCallback`. Run the profiler again to confirm the component stops re-rendering when its data has not changed.
+Next, I’d look at FlatList-specific optimizations. For a list with a fixed item height, I’d implement getItemLayout to avoid costly layout calculations during scrolling. I’d also tune props like initialNumToRender, windowSize, and maxToRenderPerBatch to reduce how much work is done at once, especially on mid-range devices.
 
-**Step 4 — Tune FlatList batch settings.** The defaults (`windowSize={21}`, `maxToRenderPerBatch={10}`) render far too many items at once on mid-range hardware. Reducing `windowSize` to 5 and `maxToRenderPerBatch` to 5 limits the off-screen render budget. Add `removeClippedSubviews` on Android to unmount off-screen native views.
-
-**Step 5 — Move heavy work off the render path.** If items contain images, switch to `react-native-fast-image` for memory-efficient decoding. If items run complex derivations, memoize them with `useMemo` inside the item component, not the parent, so work is per-item and incremental.
+Finally, I’d make sure each list item is as lightweight as possible. That means avoiding heavy computations inside render, precomputing values (like formatted time), and keeping the component tree shallow. If needed, I’d also move expensive logic outside the render path or memoize it. Overall, the goal is to reduce unnecessary work both in rendering and during scrolling.
 
 ### Q3 — useCallback and useMemo
 
-**A measurable benefit:** In a FlatList with 500 items, the `renderItem` prop is passed to every item cell as a new function reference on every parent re-render. Without `useCallback`, each re-render causes all 500 `memo`-wrapped item components to see a new reference and re-render unnecessarily. Wrapping `renderItem` in `useCallback` with a stable dependency array means the reference is stable, and `React.memo` on the item component can bail out correctly. This is directly measurable in the React DevTools profiler as a drop from N wasted renders to zero.
+A good example where useCallback provides a real benefit is when working with a FlatList. If I pass an inline renderItem or onPress handler, it gets recreated on every render, which can cause all list items to re-render unnecessarily. By wrapping those functions in useCallback, especially when combined with React.memo on the item component, I can prevent avoidable re-renders and keep scrolling smooth. In this case, the improvement is measurable, particularly on lower-end devices or large lists.
 
-**A case where `useMemo` makes things worse:** Wrapping a trivial computation — such as `` const label = useMemo(() => `${count} items`, [count]) `` — adds the overhead of closure allocation, dependency array comparison, and cache storage on every render, all to avoid a string interpolation that takes nanoseconds. The memo overhead exceeds the computation cost. `useMemo` is only worth it when the wrapped computation is genuinely expensive (heavy sort/filter over large arrays) or when referential stability of an object or array is needed to prevent downstream memo bailout failures.
+For useMemo, a common use case is when doing derived calculations on a dataset, like sorting or filtering articles before rendering. Instead of recalculating on every render, memoizing the result ensures the computation only runs when the dependencies change, which helps when the dataset is large or the logic is non-trivial.
+
+On the other hand, using useMemo everywhere can actually hurt performance. If the computation is cheap (like a simple map or small array operation), the overhead of tracking dependencies and maintaining the memoized value can cost more than just recalculating it. It also adds complexity and makes the code harder to read.
+
+So I usually treat useMemo and useCallback as optimization tools, not defaults — I use them when there’s a clear re-render or computation cost, not preemptively.
 
 ### Q4 — State Management Decision
 
-**Context API** is the right tool for low-frequency, narrow state — a theme toggle or auth token that rarely changes and is consumed by a small subtree. Its weakness is that any state update re-renders every consumer in the tree, so it does not scale to frequently-updated or widely-shared state without aggressive memoisation that negates its simplicity advantage.
+For an app with around 12 screens and some shared global state like auth, theme, and cart, I’d think about how complex the state really is and how often it changes. The Context API is fine for simple cases, but it doesn’t scale well when state updates frequently, because it can trigger unnecessary re-renders and gets hard to manage as the app grows. I’d usually avoid using it as the main state solution in anything beyond small apps.
 
-**Redux Toolkit** is the mature choice for large, team-scale apps. Its strengths are predictable unidirectional data flow, excellent DevTools time-travel debugging, a mature middleware ecosystem (RTK Query, thunks, sagas), and patterns that enforce consistency across large engineering teams. The cost is boilerplate and a steeper learning curve.
+Between Redux Toolkit and Zustand, both are solid, but they serve slightly different needs. Redux Toolkit is more structured and predictable, which is great for larger teams or more complex flows where you want strict patterns, middleware, and debugging tools. Zustand, on the other hand, is much lighter and faster to work with, with less boilerplate and a simpler mental model.
 
-**Zustand** sits between the two. It has virtually no boilerplate, supports fine-grained subscriptions (consumers only re-render when the specific slice they select changes), integrates with persistence and devtools middleware, and scales well for medium-complexity apps. It lacks the strong conventions of Redux, which can lead to inconsistency on large teams.
-
-For this 12-screen app I would choose **Zustand** for local UI state (sort preference, scroll position, bookmarks) paired with **React Query** for all server state. This combination covers auth, caching, and background sync without needing Redux at all. I would reconsider Redux Toolkit if the team exceeded ~8 engineers, if complex optimistic updates with rollback were required, or if deep debugging of state history became a daily concern.
+For this kind of app, I’d likely start with Zustand because it keeps things simple and avoids over-engineering, while still handling global state cleanly. It also works well alongside tools like React Query, where server state is managed separately. However, if the app grows in complexity — for example, more advanced business logic, complex side effects, or a larger team needing stricter conventions — I’d consider moving to Redux Toolkit for better scalability and consistency.
 
 ### Q5 — Offline-First UX Strategy
 
-**Detection:** `@react-native-community/netinfo` provides a real-time connectivity stream. Subscribe in a top-level provider and surface a banner when `isConnected` is false. Do not block the UI — show stale data with a banner rather than a hard error.
+For an offline-first screen, the first step is detecting connectivity. I’d use something like @react-native-community/netinfo to listen to network changes and show a clear UI state (like an offline banner) so the user knows what’s going on. That’s important for setting expectations.
 
-**Caching strategy:** React Query's built-in cache covers the in-session case. For cross-session offline support, persist the query cache to AsyncStorage using `@tanstack/query-async-storage-persister`. This lets the app render last-known data immediately on cold start without a network round-trip.
+For caching, I’d rely on a combination of React Query for server state and a persistent storage like MMKV or AsyncStorage. React Query can cache the last successful response in memory, and with persistence, I can restore that data even after a cold start. This allows the screen to still show meaningful data when the user is offline.
 
-**Cache invalidation:** Set `staleTime` to a value appropriate to how frequently the data changes (e.g. 5 minutes for a news feed). On reconnect, React Query automatically refetches stale queries in the background. For write operations, queue mutations locally (a simple Zustand slice or the `react-native-offline` library) and replay them on reconnect.
+For cache invalidation, I’d usually define a reasonable stale time and trigger refetches when the app comes back online. I wouldn’t try to aggressively sync everything in the background unless it’s really necessary, since that adds complexity. Instead, I’d prioritize showing cached data quickly and refreshing it when possible.
 
-**Libraries:** `@react-native-community/netinfo` for detection, `@tanstack/react-query` with the AsyncStorage persister for read caching, and `react-native-mmkv` as the storage layer if synchronous reads on cold start matter.
-
-**Trade-offs:** The main risk is staleness — the user may act on outdated data. Write-operation conflict resolution (when a queued mutation meets a changed server state) adds meaningful complexity and would require a product-level decision on the merge strategy.
+The main trade-off here is complexity versus reliability. Adding offline support means more edge cases — like stale data, sync conflicts, or partial updates. For many apps, a “cache-first with graceful fallback” approach is enough, rather than a fully offline-synced system. So I’d balance how critical offline functionality is against how much complexity the app can handle.
 
 ---
 
