@@ -1,0 +1,35 @@
+appId: com.automatedprosassignment
+---
+- launchApp
+- assertVisible:
+    text: Home
+- assertVisible:
+    text: Bookmarks
+# Wait for stories list to be visible
+- assertVisible:
+    id: story-item-.*
+# Tap on the first story item (matches any story-item-* ID)
+- tapOn:
+    id: story-item-.*
+# Verify we're on the story details screen
+- assertVisible:
+    id: story-detail-screen
+# Scroll down to see the bookmark button
+- scroll
+# Verify the bookmark button shows "Add Bookmark"
+- assertVisible:
+    text: Add Bookmark
+# Tap the bookmark button
+- tapOn:
+    text: Add Bookmark
+# Verify the text changed to "Bookmarked"
+- assertVisible:
+    text: Bookmarked
+# Navigate back to home
+- back
+# Verify we're back at home
+- assertVisible:
+    id: stories-list
+
+- assertVisible:
+    id: stories-list

@@ -12,6 +12,7 @@ import { colors, spacing, radius } from '@/theme';
 import { getRelativeTime } from '@/utils/time';
 import ShareButton from '@/components/shareButton';
 import AddBookmark from '@/components/addBookmark';
+import { testIds } from '@/consts/testIds';
 
 type StoryDetailRouteProp = RouteProp<RootStackParamList, Screens.storyDetails>;
 
@@ -37,7 +38,11 @@ const StoryDetailScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      testID={testIds.storyDetail.screen}
+      style={styles.container}
+      contentContainerStyle={styles.content}
+    >
       <View style={styles.header}>
         <AppText style={styles.title}>{story.title}</AppText>
       </View>

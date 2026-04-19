@@ -78,7 +78,7 @@ export const StoriesList: FC<Props> = ({
   const listEmptyComponent = useCallback(() => {
     if (isLoading) {
       return (
-        <View style={styles.loadingContainer}>
+        <View testID={testIds.home.loading} style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <AppText style={styles.loadingText}>Loading stories...</AppText>
         </View>
@@ -128,6 +128,7 @@ export const StoriesList: FC<Props> = ({
 
   return (
     <FlatList
+      testID={testIds.storyItem.list}
       ref={flatListRef}
       data={items}
       keyExtractor={keyExtractor}
