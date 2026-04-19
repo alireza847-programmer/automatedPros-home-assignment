@@ -1,5 +1,11 @@
 # HackerNews Feed — React Native Technical Assessment
 
+## Overview
+
+This project is a two-screen Hacker News client built with a focus on clear separation between server state and client state, predictable data flow, and performance-conscious UI rendering.
+
+React Query is used for server state (fetching, caching, and background updates), while Zustand manages lightweight client state such as bookmarks, sorting, and UI behavior. The goal was to keep the architecture simple but scalable, avoiding over-engineering while still following production-grade patterns.
+
 ---
 
 ## 1. Setup & Running the App
@@ -65,14 +71,18 @@ This keeps business logic out of components and makes each layer independently t
 
 Zustand was chosen over Redux Toolkit for two reasons specific to this project:
 
-- **Minimal boilerplate**: bookmarks and scroll position are simple slices that do not need reducers, action creators, or selectors. Zustand collapses all of that into a single `create()` call.
+- **Minimal boilerplate**: bookmarks and scroll position are simple slices that do not need reducers, action creators, or selectors. Zustand keeps the API minimal and avoids the need for reducers, actions, and boilerplate.
 - **Persistence is a first-class plugin** (`zustand/middleware persist`) — wiring AsyncStorage took three lines, vs. the redux-persist configuration overhead.
 
 Redux Toolkit would be the right call on a app with complex server-state synchronisation, optimistic updates, or middleware chains. At this scope, it would be overengineering.
 
 ### Server State — React Query (@tanstack/react-query)
 
-React Query handles all API data: caching, background refetch, loading/error/stale states, and pull-to-refresh. The `queryKey: [topStories]` means the 20 story fetches are shared across the Home and Bookmarks screens with zero duplicate network calls.
+React Query is used to manage all server state, including fetching, caching, and background refetching. The top stories are fetched using a single query (`queryKey: ['topStories']`) that internally retrieves the first 20 IDs and resolves them in parallel.
+
+I intentionally used a single query instead of multiple queries (e.g. `useQueries`) to avoid unnecessary re-renders and to keep loading/error states simple and predictable. This also ensures the UI behaves consistently during refresh and navigation.
+
+React Query’s caching allows the list to persist across navigation without refetching, improving perceived performance and reducing network usage.
 
 ### Bookmark Persistence — AsyncStorage
 
@@ -80,7 +90,7 @@ AsyncStorage was chosen over MMKV because it is the zero-config default and the 
 
 ### Image Loading — react-native-fast-image
 
-FastImage provides HTTP cache-control headers, priority queueing, and significantly faster image loading on Android compared to the built-in `Image` component. Favicon images are fetched via Google's favicon API so no third-party image CDN registration is required.
+FastImage improves image loading performance and caching, especially on Android, priority queueing, and significantly faster image loading on Android compared to the built-in `Image` component. Favicon images are fetched via Google's favicon API so no third-party image CDN registration is required.
 
 ### Navigation — React Navigation v6 (Native Stack)
 
@@ -158,18 +168,34 @@ The main trade-off here is complexity versus reliability. Adding offline support
 
 ## 5. Testing
 
-### Unit test — `sortStories` utility
+### Unit Test — `sortStories`
 
-Tests the core sorting logic in `src/utils/sorting.ts`: verifies that score sort orders by descending score, time sort orders by descending timestamp, and both handle empty arrays without throwing.
+Covers the core business logic for sorting. Verifies correct ordering for both score and time, and ensures edge cases like empty arrays are handled safely.
 
-### Component interaction test — `StoryItem`
+### Component Test — `StoryItem`
 
-Uses React Native Testing Library to render a `StoryItem` with a mock story, asserts the title and domain are visible, and simulates a press to verify `navigation.navigate` is called with the correct screen and params.
+Uses React Native Testing Library to verify rendering and interaction. Asserts that the title and domain are displayed correctly and that pressing the item triggers navigation with the expected params.
+
+The goal of these tests is to cover both pure logic and user interaction, rather than focusing on implementation details.
+
+---
+
+## 7. What I’d Improve with More Time
+
+- Add pagination or infinite scroll instead of limiting to 20 items
+- Persist React Query cache to storage for better offline support
+- Improve scroll position restoration across cold starts
+- Introduce better skeleton loading instead of a simple spinner
+
+I focused on keeping the implementation clean and predictable rather than adding more features with partial quality.
 
 ---
 
 ## 6. Bonus Features Implemented
 
-- **Bookmarks** — `BookmarksScreen` filters the cached top-stories list by bookmarked IDs. Swipe-to-remove is implemented via `ReanimatedSwipeable` from `react-native-gesture-handler`.
+- **Bookmarks** — `BookmarksScreen` Bookmarks are stored as a list of IDs in Zustand and mapped against the cached stories from React Query. This avoids duplicating server data while still allowing quick access to bookmarked items.
+  A trade-off here is that bookmarked items depend on the availability of cached data. In a production app, I would consider persisting full item data or fetching missing items on demand.
+  Swipe-to-remove is implemented via `ReanimatedSwipeable` from `react-native-gesture-handler`.
+
 - **Debounced search** — `AppSearchInput` maintains local state and fires the parent callback after a configurable debounce (default 300 ms). No additional API calls are made; filtering runs client-side over the cached result.
 - **Offline banner** — `OfflineBanner` subscribes to NetInfo and renders a red banner when `isConnected` is false. It self-manages connectivity state internally so the parent only needs to pass `isVisible`.
