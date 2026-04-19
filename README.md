@@ -95,12 +95,6 @@ FastImage provides HTTP cache-control headers, priority queueing, and significan
 
 - **Scroll position resets on cold restart.** The scroll offset is saved to an in-memory Zustand store. Navigation-back restoration works correctly (as required), but a full cold-start restoration would require persisting the offset to AsyncStorage.
 
-- **Bookmarks screen re-fetches the full top-stories list and filters client-side.** This means bookmarks only show stories that are currently in the top-20. A production app would store the full `StoryDto` in AsyncStorage so bookmarks persist independently of the API response.
-
-- **Sort preference flash on cold start.** The sort preference is read from AsyncStorage inside `useLayoutEffect`, which still runs after the first render. This causes a brief flash of the default sort before the stored value is applied. The fix would be to store sort preference in the same persisted Zustand store used for bookmarks, making it synchronously available on first render.
-
-- **`staleTime: 0` in `useTopStories`** means every focus event triggers a re-fetch of all 20 items in parallel. Setting `staleTime` to 5 minutes would significantly reduce network pressure in production.
-
 ---
 
 ## 4. Technical Questions
