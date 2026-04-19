@@ -98,7 +98,11 @@ FastImage provides HTTP cache-control headers, priority queueing, and significan
 
 ## 4. Profiling
 
+### Load the home screen cold
+
 ![Load the home screen cold](docs/home-cold.png)
+
+### Scroll up and down through the list
 
 ![Scroll up and down through the list](docs/scroll.png)
 
