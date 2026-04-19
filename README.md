@@ -178,6 +178,30 @@ Uses React Native Testing Library to verify rendering and interaction. Asserts t
 
 The goal of these tests is to cover both pure logic and user interaction, rather than focusing on implementation details.
 
+### E2E Tests — Maestro
+
+End-to-end tests using [Maestro](https://maestro.mobile.dev/) validate complete user flows across the app.
+
+**Running E2E Tests:**
+
+```bash
+# Install Maestro (one-time)
+curl -Ls "https://get.maestro.mobile.dev" | bash
+
+# Build and run the app
+yarn ios  # or yarn android
+
+# Run the bookmark story e2e test
+maestro test .maestro/bookmark_story.yaml
+
+# Run all e2e tests
+maestro test .maestro/
+```
+
+**Available Tests:**
+
+- **`bookmark_story.yaml`** — Tests the complete bookmark workflow: launch app, navigate to a story, scroll to the bookmark button, bookmark the story, verify state change, and navigate back.
+
 ---
 
 ## 7. What I’d Improve with More Time

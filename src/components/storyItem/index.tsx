@@ -14,6 +14,7 @@ import { getRelativeTime } from '@/utils/time';
 import { getDomainFromUrl } from '@/utils/url';
 import { RootStackParamList, Screens } from '@/navigation/types';
 import useBookmarksStore from '@/store/bookmarksStore';
+import { testIds } from '@/consts/testIds';
 
 interface Props {
   item: StoryDto;
@@ -70,7 +71,11 @@ const StoryItem: FC<Props> = ({ item }) => {
       containerStyle={styles.swipeableContainer}
       enabled={isStoryBookmarked}
     >
-      <Pressable onPress={onItemPress} style={styles.container}>
+      <Pressable
+        onPress={onItemPress}
+        style={styles.container}
+        testID={testIds.storyItem.row(item.id)}
+      >
         {faviconUrl && (
           <AppImage
             uri={faviconUrl}

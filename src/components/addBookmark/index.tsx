@@ -17,7 +17,7 @@ const AddBookmark: FC<Props> = ({ story }) => {
   const toggleBookmark = useBookmarksStore(state => state.toggleBookmark);
 
   return (
-    <View style={styles.container}>
+    <View testID={testIds.bookmark.container} style={styles.container}>
       <View style={styles.bookmarkRow}>
         <AppText style={styles.metaLabel}>Bookmark:</AppText>
         <Pressable
