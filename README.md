@@ -14,8 +14,7 @@
 ### Installation
 
 ```bash
-git clone <repo-url> && cd HackerNewsFeed
-npm install
+yarn
 cd ios && pod install && cd ..
 ```
 
@@ -31,16 +30,16 @@ API_BASE_URL=https://hacker-news.firebaseio.com/v0/
 
 ```bash
 # Android
-npx react-native run-android
+yarn android
 
 # iOS
-npx react-native run-ios
+yarn ios
 ```
 
 ### Tests
 
 ```bash
-npm test
+yarn test
 ```
 
 ---
@@ -69,7 +68,7 @@ Zustand was chosen over Redux Toolkit for two reasons specific to this project:
 - **Minimal boilerplate**: bookmarks and scroll position are simple slices that do not need reducers, action creators, or selectors. Zustand collapses all of that into a single `create()` call.
 - **Persistence is a first-class plugin** (`zustand/middleware persist`) — wiring AsyncStorage took three lines, vs. the redux-persist configuration overhead.
 
-Redux Toolkit would be the right call on a 12+ screen app with complex server-state synchronisation, optimistic updates, or middleware chains. At this scope, it would be overengineering.
+Redux Toolkit would be the right call on a app with complex server-state synchronisation, optimistic updates, or middleware chains. At this scope, it would be overengineering.
 
 ### Server State — React Query (@tanstack/react-query)
 
@@ -96,6 +95,12 @@ FastImage provides HTTP cache-control headers, priority queueing, and significan
 - **Scroll position resets on cold restart.** The scroll offset is saved to an in-memory Zustand store. Navigation-back restoration works correctly (as required), but a full cold-start restoration would require persisting the offset to AsyncStorage.
 
 ---
+
+## 4. Profiling
+
+![Load the home screen cold](docs/home-cold.png)
+
+![Scroll up and down through the list](docs/scroll.png)
 
 ## 4. Technical Questions
 

@@ -11,7 +11,7 @@ export const useTopStories = (sortBy: SortOption = 'score') => {
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: [QUERY_KEYS.topStories, sortBy],
     queryFn,
-    staleTime: 0,
+    staleTime: 60 * 1000 * 5, // 5min
   });
 
   const sortedData = useMemo(() => {
